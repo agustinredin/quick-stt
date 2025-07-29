@@ -96,6 +96,7 @@ export default function SpeechToTextApp() {
   const rightTextareaRef = useRef<HTMLTextAreaElement>(null)
   const isRecordingRef = useRef(isRecording)
   const mockTranscriptIndexRef = useRef(0)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
 
   // Mock speech recognition function
   const startMockRecording = useCallback(() => {
@@ -137,6 +138,53 @@ export default function SpeechToTextApp() {
     }
     setIsProcessing(false)
   }, [])
+
+  const sendOpenAIChunk = async (blob: Blob) => {
+    const formData = new FormData()
+    formData.append('file', blob, 'chunk.webm')
+    try {
+      setIsProcessing(true)
+      const res = await fetch('/api/openai-transcribe', {
+        method: 'POST',
+        body: formData
+      })
+      const data = await res.json()
+      if (data.text) {
+        setRightText(prev => prev + (prev ? ' ' : '') + data.text.trim())
+      }
+    } catch (err) {
+      console.error('OpenAI transcription error:', err)
+      toast.error('OpenAI transcription error')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const startOpenAIRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const recorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = recorder
+      recorder.ondataavailable = e => {
+        if (e.data.size > 0) {
+          sendOpenAIChunk(e.data)
+        }
+      }
+      recorder.start(2000)
+    } catch (err) {
+      console.error('OpenAI record error:', err)
+      toast.error('Failed to access microphone')
+    }
+  }
+
+  const stopOpenAIRecording = () => {
+    const recorder = mediaRecorderRef.current
+    if (recorder) {
+      recorder.stream.getTracks().forEach(t => t.stop())
+      recorder.stop()
+      mediaRecorderRef.current = null
+    }
+  }
 
   // Switch between textareas with cursor at end
   const switchTextarea = useCallback(() => {
@@ -346,9 +394,17 @@ export default function SpeechToTextApp() {
         toast.success('Mock recording started - simulating speech!')
       }
     } else {
-      // Real speech recognition
+      // Real speech recognition or OpenAI fallback
       if (!isSupported) {
-        toast.error('Speech recognition is not supported in this browser')
+        if (isRecording) {
+          setIsRecording(false)
+          stopOpenAIRecording()
+          toast.info('Recording stopped')
+        } else {
+          setIsRecording(true)
+          startOpenAIRecording()
+          toast.success('Recording started - speak now!')
+        }
         return
       }
 

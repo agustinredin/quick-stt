@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "bunx tsc --noEmit && next lint",
-    "format": "bunx biome format --write"
+    "format": "bunx biome format --write",
+    "openai-stream": "node src/openai_stream.mjs"
   },
   "dependencies": {
     "@radix-ui/react-select": "^2.2.5",
