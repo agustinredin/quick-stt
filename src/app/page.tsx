@@ -100,13 +100,11 @@ export default function SpeechToTextApp() {
 
   // Mock speech recognition function
   const startMockRecording = useCallback(() => {
-    debugger
     if (mockIntervalRef.current) {
       clearInterval(mockIntervalRef.current)
     }
 
     mockIntervalRef.current = setInterval(() => {
-        debugger
       if (!isRecordingRef.current) return
 
       const transcript = MOCK_TRANSCRIPTS[mockTranscriptIndexRef.current % MOCK_TRANSCRIPTS.length]
@@ -386,10 +384,12 @@ export default function SpeechToTextApp() {
       // Mock mode recording
       if (isRecording) {
         setIsRecording(false)
+        isRecordingRef.current = false
         stopMockRecording()
         toast.info('Mock recording stopped')
       } else {
         setIsRecording(true)
+        isRecordingRef.current = true
         startMockRecording()
         toast.success('Mock recording started - simulating speech!')
       }
@@ -411,6 +411,7 @@ export default function SpeechToTextApp() {
       if (isRecording) {
         // Set state first to prevent race condition in onend callback
         setIsRecording(false)
+        isRecordingRef.current = false
         setIsProcessing(false)
         recognitionRef.current?.stop()
         if (intervalRef.current) {
@@ -419,6 +420,7 @@ export default function SpeechToTextApp() {
         toast.info('Recording stopped')
       } else {
         setIsRecording(true)
+        isRecordingRef.current = true
         recognitionRef.current?.start()
         toast.success('Recording started - speak now!')
       }
@@ -434,6 +436,7 @@ export default function SpeechToTextApp() {
         recognitionRef.current?.stop()
       }
       setIsRecording(false)
+      isRecordingRef.current = false
       setIsProcessing(false)
     }
     
