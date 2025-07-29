@@ -20,6 +20,18 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Streaming audio transcription
+
+To stream microphone audio to OpenAI's transcription API every few seconds run:
+
+```bash
+npm run openai-stream
+```
+
+The script records two-second audio chunks using ffmpeg and prints the resulting transcription to the console. Set `OPENAI_API_KEY` in your environment before running.
+
+In the web app, if your browser lacks built‑in speech recognition the record button will capture 2‑second microphone chunks and send them to OpenAI for transcription using the same API key.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
