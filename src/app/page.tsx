@@ -88,6 +88,7 @@ export default function SpeechToTextApp() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [isMockMode, setIsMockMode] = useState(false)
   const [mockSpeed, setMockSpeed] = useState(1000) // milliseconds between mock phrases
+  const [isSummarizing, setIsSummarizing] = useState(false)
 
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -487,6 +488,29 @@ export default function SpeechToTextApp() {
     }
   }
 
+  const summarizeLeftText = async () => {
+    if (!leftText.trim()) return
+    try {
+      setIsSummarizing(true)
+      const res = await fetch('/api/openai-summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: leftText })
+      })
+      const data = await res.json()
+      console.log('Summarize result:', data.summary)
+      if (data.summary) {
+        setLeftText(data.summary)
+        toast.success('Text summarized')
+      }
+    } catch (err) {
+      console.error('Summarize error:', err)
+      toast.error('Failed to summarize text')
+    } finally {
+      setIsSummarizing(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-800 text-white p-6">
       <div className="max-w-7xl mx-auto">
@@ -619,6 +643,15 @@ export default function SpeechToTextApp() {
                 >
                   <X className="h-4 w-4 mr-1" />
                   Clear
+                </Button>
+                <Button
+                  onClick={summarizeLeftText}
+                  size="sm"
+                  variant="outline"
+                  className="text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white"
+                  disabled={!leftText.trim() || isSummarizing}
+                >
+                  Summarize
                 </Button>
               </div>
             </div>
