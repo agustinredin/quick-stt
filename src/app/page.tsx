@@ -72,6 +72,7 @@ interface SpeechRecognition extends EventTarget {
 
 declare global {
   interface Window {
+    startMockRecording: () => void
     SpeechRecognition: new () => SpeechRecognition
     webkitSpeechRecognition: new () => SpeechRecognition
   }
@@ -106,8 +107,8 @@ export default function SpeechToTextApp() {
     }
 
     mockIntervalRef.current = setInterval(() => {
+        debugger
       if (!isRecordingRef.current) return
-
       const transcript = MOCK_TRANSCRIPTS[mockTranscriptIndexRef.current % MOCK_TRANSCRIPTS.length]
       mockTranscriptIndexRef.current++
 
@@ -117,6 +118,7 @@ export default function SpeechToTextApp() {
 
       // After a short delay, make it final
       setTimeout(() => {
+        debugger
         if (isRecordingRef.current) {
           setRightText(prev => {
             const newText = prev + (prev ? ' ' : '') + transcript
@@ -128,7 +130,10 @@ export default function SpeechToTextApp() {
         }
       }, 500) // Random delay between 1-2 seconds
     }, mockSpeed)
+
+    console.log('mock recording started', mockIntervalRef.current)
   }, [mockSpeed])
+
 
   const stopMockRecording = useCallback(() => {
     if (mockIntervalRef.current) {
@@ -381,6 +386,7 @@ export default function SpeechToTextApp() {
   }, [selectedLanguage])
 
   const toggleRecording = () => {
+    // debugger
     if (isMockMode) {
       // Mock mode recording
       if (isRecording) {
@@ -460,13 +466,13 @@ export default function SpeechToTextApp() {
   }
 
   // Export functions
-  const exportAsText = (content: string, filename: string) => {
+  const exportAsText = (content: string, filename?: string) => {
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
-    saveAs(blob, `${filename}.txt`)
+    saveAs(blob, `tsc-${content.length ? content.slice(0, 10) : filename}.txt`)
     toast.success(`Exported as ${filename}.txt`)
   }
 
-  const exportAsDocx = async (content: string, filename: string) => {
+  const exportAsDocx = async (content: string, filename?: string) => {
     try {
       const doc = new Document({
         sections: [{
@@ -512,7 +518,7 @@ export default function SpeechToTextApp() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-black p-6">
+    <div className="min-h-screen bg-sky-950 text-white p-6">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-center mb-8">Speech-to-Text App</h1>
 
@@ -616,7 +622,7 @@ export default function SpeechToTextApp() {
               <div className="flex gap-2">
                 <div className="flex">
                   <Button
-                    onClick={() => exportAsText(leftText, 'left-panel')}
+                    onClick={() => exportAsText(leftText)}
                     size="sm"
                     variant="outline"
                     className="text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white rounded-r-none"
@@ -626,7 +632,7 @@ export default function SpeechToTextApp() {
                     TXT
                   </Button>
                   <Button
-                    onClick={() => exportAsDocx(leftText, 'left-panel')}
+                    onClick={() => exportAsDocx(leftText)}
                     size="sm"
                     variant="outline"
                     className="text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white rounded-l-none border-l-0"
@@ -671,7 +677,7 @@ export default function SpeechToTextApp() {
               <div className="flex gap-2">
                 <div className="flex">
                   <Button
-                    onClick={() => exportAsText(rightText, 'speech-transcript')}
+                    onClick={() => exportAsText(rightText)}
                     size="sm"
                     variant="outline"
                     className="text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white rounded-r-none"
@@ -681,7 +687,7 @@ export default function SpeechToTextApp() {
                     TXT
                   </Button>
                   <Button
-                    onClick={() => exportAsDocx(rightText, 'speech-transcript')}
+                    onClick={() => exportAsDocx(rightText)}
                     size="sm"
                     variant="outline"
                     className="text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white rounded-l-none border-l-0"
