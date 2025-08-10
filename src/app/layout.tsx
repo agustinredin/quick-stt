@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Orbitron } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import ClientBody from "./ClientBody";
@@ -13,6 +13,12 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const orbitron = Orbitron({
+  variable: "--font-orbitron",
+  subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -33,7 +39,9 @@ export default function RootLayout({
           src="//unpkg.com/same-runtime/dist/index.global.js"
         />
       </head>
-      <body className="antialiased">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${orbitron.variable} antialiased`}
+      >
         <ClientBody>{children}</ClientBody>
         <Toaster />
       </body>
