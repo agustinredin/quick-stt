@@ -4,6 +4,7 @@ import { ValidationError } from '@/shared/errors'
 
 export interface SummarizeTextInput {
   text: string | undefined
+  language: string | undefined
 }
 
 export class SummarizeTextUseCase {
@@ -11,9 +12,10 @@ export class SummarizeTextUseCase {
 
   async execute(input: SummarizeTextInput): Promise<SummarizationResult> {
     const text = input.text?.trim()
+    const language = input.language?.trim() || 'en'
     if (!text) {
       throw new ValidationError('Missing text')
     }
-    return this.summarizationService.summarize(text)
+    return this.summarizationService.summarize(text, language)
   }
-} 
+}
