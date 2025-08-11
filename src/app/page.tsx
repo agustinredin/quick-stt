@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -28,6 +29,12 @@ const LANGUAGES = [
   { code: "zh-CN", name: "Chinese (Mandarin)" },
   { code: "ru-RU", name: "Russian" },
   { code: "ar-SA", name: "Arabic" },
+];
+
+// Supported app interface languages
+const APP_LANGUAGES = [
+  { code: "en", name: "English" },
+  { code: "es", name: "Español" },
 ];
 
 // Mock transcript data for testing
@@ -85,6 +92,8 @@ declare global {
 }
 
 export default function SpeechToTextApp() {
+  const { t, i18n } = useTranslation();
+  const [appLanguage, setAppLanguage] = useState(i18n.language);
   const [leftText, setLeftText] = useState("");
   const [rightText, setRightText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -96,6 +105,11 @@ export default function SpeechToTextApp() {
   const [isMockMode, setIsMockMode] = useState(false);
   const [mockSpeed, setMockSpeed] = useState(1000); // milliseconds between mock phrases
   const [isSummarizing, setIsSummarizing] = useState(false);
+
+  const changeAppLanguage = (lang: string) => {
+    setAppLanguage(lang);
+    i18n.changeLanguage(lang);
+  };
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -166,7 +180,7 @@ export default function SpeechToTextApp() {
       }
     } catch (err) {
       console.error("OpenAI transcription error:", err);
-      toast.error("OpenAI transcription error");
+      toast.error(t("toast.openaiError"));
     } finally {
       setIsProcessing(false);
     }
@@ -185,7 +199,7 @@ export default function SpeechToTextApp() {
       recorder.start(2000);
     } catch (err) {
       console.error("OpenAI record error:", err);
-      toast.error("Failed to access microphone");
+      toast.error(t("toast.microphoneError"));
     }
   };
 
@@ -211,8 +225,8 @@ export default function SpeechToTextApp() {
           rightText.length,
           rightText.length,
         );
-        toast.success("Switched to right panel", {
-          description: "Used Ctrl+Shift+Tab shortcut",
+        toast.success(t("toast.switchedRight"), {
+          description: t("toast.usedShortcut", { shortcut: "Ctrl+Shift+Tab" }),
         });
       }
     } else if (rightFocused) {
@@ -223,8 +237,8 @@ export default function SpeechToTextApp() {
           leftText.length,
           leftText.length,
         );
-        toast.success("Switched to left panel", {
-          description: "Used Ctrl+Shift+Tab shortcut",
+        toast.success(t("toast.switchedLeft"), {
+          description: t("toast.usedShortcut", { shortcut: "Ctrl+Shift+Tab" }),
         });
       }
     } else {
@@ -235,12 +249,12 @@ export default function SpeechToTextApp() {
           leftText.length,
           leftText.length,
         );
-        toast.success("Focused on left panel", {
-          description: "Used Ctrl+Shift+Tab shortcut",
+        toast.success(t("toast.focusedLeft"), {
+          description: t("toast.usedShortcut", { shortcut: "Ctrl+Shift+Tab" }),
         });
       }
     }
-  }, [leftText, rightText]);
+  }, [leftText, rightText, t]);
 
   useEffect(() => {
     isRecordingRef.current = isRecording;
@@ -307,7 +321,7 @@ export default function SpeechToTextApp() {
           if (intervalRef.current) {
             clearInterval(intervalRef.current);
           }
-          toast.error(`Speech recognition error: ${event.error}`);
+          toast.error(t("toast.speechRecognitionError", { error: event.error }));
         };
 
         recognitionRef.current.onend = () => {
@@ -331,26 +345,26 @@ export default function SpeechToTextApp() {
           case "q":
             e.preventDefault();
             setLeftText(rightText);
-            toast.success("Left panel overwritten with right content", {
-              description: "Used Alt+Q shortcut",
+            toast.success(t("toast.leftOverwritten"), {
+              description: t("toast.usedShortcut", { shortcut: "Alt+Q" }),
             });
             break;
           case "w":
             e.preventDefault();
             setLeftText((prev) => prev + (prev ? " " : "") + rightText);
-            toast.success("Right content appended to left panel", {
-              description: "Used Alt+W shortcut",
+            toast.success(t("toast.rightAppended"), {
+              description: t("toast.usedShortcut", { shortcut: "Alt+W" }),
             });
             break;
           case "e":
             e.preventDefault();
             if (navigator.clipboard) {
               navigator.clipboard.writeText(leftText);
-              toast.success("Left content copied to clipboard", {
-                description: "Used Alt+E shortcut",
+              toast.success(t("toast.leftCopied"), {
+                description: t("toast.usedShortcut", { shortcut: "Alt+E" }),
               });
             } else {
-              toast.error("Clipboard not supported in this browser");
+              toast.error(t("toast.clipboardUnsupported"));
             }
             break;
         }
@@ -362,15 +376,15 @@ export default function SpeechToTextApp() {
           case "l":
             e.preventDefault();
             clearLeftText();
-            toast.success("Left panel cleared", {
-              description: "Used Ctrl+Shift+L shortcut",
+            toast.success(t("toast.leftCleared"), {
+              description: t("toast.usedShortcut", { shortcut: "Ctrl+Shift+L" }),
             });
             break;
           case "r":
             e.preventDefault();
             clearRightText();
-            toast.success("Right panel cleared", {
-              description: "Used Ctrl+Shift+R shortcut",
+            toast.success(t("toast.rightCleared"), {
+              description: t("toast.usedShortcut", { shortcut: "Ctrl+Shift+R" }),
             });
             break;
           case "tab":
@@ -394,7 +408,7 @@ export default function SpeechToTextApp() {
         clearInterval(currentMockInterval);
       }
     };
-  }, [leftText, rightText, isRecording, selectedLanguage, switchTextarea]);
+  }, [leftText, rightText, isRecording, selectedLanguage, switchTextarea, t]);
 
   // Update language when selection changes
   useEffect(() => {
@@ -411,12 +425,12 @@ export default function SpeechToTextApp() {
         setIsRecording(false);
         isRecordingRef.current = false;
         stopMockRecording();
-        toast.info("Mock recording stopped");
+        toast.info(t("recording.mockStopped"));
       } else {
         setIsRecording(true);
         isRecordingRef.current = true;
         startMockRecording();
-        toast.success("Mock recording started - simulating speech!");
+        toast.success(t("recording.mockStarted"));
       }
     } else {
       // Real speech recognition or OpenAI fallback
@@ -424,11 +438,11 @@ export default function SpeechToTextApp() {
         if (isRecording) {
           setIsRecording(false);
           stopOpenAIRecording();
-          toast.info("Recording stopped");
+          toast.info(t("recording.stopped"));
         } else {
           setIsRecording(true);
           startOpenAIRecording();
-          toast.success("Recording started - speak now!");
+          toast.success(t("recording.started"));
         }
         return;
       }
@@ -442,12 +456,12 @@ export default function SpeechToTextApp() {
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
         }
-        toast.info("Recording stopped");
+        toast.info(t("recording.stopped"));
       } else {
         setIsRecording(true);
         isRecordingRef.current = true;
         recognitionRef.current?.start();
-        toast.success("Recording started - speak now!");
+        toast.success(t("recording.started"));
       }
     }
   };
@@ -467,17 +481,21 @@ export default function SpeechToTextApp() {
 
     setIsMockMode(!isMockMode);
     mockTranscriptIndexRef.current = 0;
-    toast.success(`Switched to ${!isMockMode ? "mock" : "real"} mode`);
+    toast.success(
+      t("mode.switched", {
+        mode: t(`mode.${!isMockMode ? "mock" : "real"}`),
+      }),
+    );
   };
 
   const clearLeftText = () => {
     setLeftText("");
-    toast.success("Left panel cleared");
+    toast.success(t("toast.leftCleared"));
   };
 
   const clearRightText = () => {
     setRightText("");
-    toast.success("Right panel cleared");
+    toast.success(t("toast.rightCleared"));
     setConfidenceScore(null);
     setLastTranscript("");
     setIsProcessing(false);
@@ -487,7 +505,7 @@ export default function SpeechToTextApp() {
   const exportAsText = (content: string, filename?: string) => {
     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
     saveAs(blob, `tsc-${content.length ? content.slice(0, 10) : filename}.txt`);
-    toast.success(`Exported as ${filename}.txt`);
+    toast.success(t("toast.exported", { filename, ext: "txt" }));
   };
 
   const exportAsDocx = async (content: string, filename?: string) => {
@@ -508,9 +526,9 @@ export default function SpeechToTextApp() {
 
       const buffer = await Packer.toBlob(doc);
       saveAs(buffer, `${filename}.docx`);
-      toast.success(`Exported as ${filename}.docx`);
+      toast.success(t("toast.exported", { filename, ext: "docx" }));
     } catch (error) {
-      toast.error("Failed to export as DOCX");
+      toast.error(t("toast.exportDocxError"));
       console.error("DOCX export error:", error);
     }
   };
@@ -522,17 +540,17 @@ export default function SpeechToTextApp() {
       const res = await fetch("/api/openai-summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: leftText }),
+        body: JSON.stringify({ text: leftText, language: appLanguage }),
       });
       const data = await res.json();
       console.log("Summarize result:", data.summary);
       if (data.summary) {
         setLeftText(data.summary);
-        toast.success("Text summarized");
+        toast.success(t("toast.textSummarized"));
       }
     } catch (err) {
       console.error("Summarize error:", err);
-      toast.error("Failed to summarize text");
+      toast.error(t("toast.summarizeError"));
     } finally {
       setIsSummarizing(false);
     }
@@ -542,7 +560,7 @@ export default function SpeechToTextApp() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black text-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold text-center mb-8 bg-gradient-to-r from-cyan-400 via-purple-500 to-green-400 bg-clip-text text-transparent">
-          Speech-to-Text App
+          {t("title")}
         </h1>
 
         {/* Mode Toggle and Language Selector */}
@@ -558,12 +576,12 @@ export default function SpeechToTextApp() {
               ) : (
                 <Pause className="h-4 w-4 mr-2" />
               )}
-              {isMockMode ? "Mock Mode" : "Real Mode"}
+              {isMockMode ? t("mode.mock") : t("mode.real")}
             </Button>
 
             {isMockMode && (
               <div className="flex items-center gap-2">
-                <label className="text-sm">Speed:</label>
+                <label className="text-sm">{t("mode.speed")}:</label>
                 <Select
                   value={mockSpeed.toString()}
                   onValueChange={(value) => setMockSpeed(parseInt(value))}
@@ -576,30 +594,50 @@ export default function SpeechToTextApp() {
                       value="1000"
                       className="text-white hover:bg-white/20"
                     >
-                      Fast
+                      {t("mode.fast")}
                     </SelectItem>
                     <SelectItem
                       value="3000"
                       className="text-white hover:bg-white/20"
                     >
-                      Normal
+                      {t("mode.normal")}
                     </SelectItem>
                     <SelectItem
                       value="5000"
                       className="text-white hover:bg-white/20"
                     >
-                      Slow
+                      {t("mode.slow")}
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             )}
           </div>
+          {/* App Language Selector */}
+          <div className="flex flex-col items-center gap-2">
+            <label className="text-sm font-medium">{t("appLanguage")}</label>
+            <Select value={appLanguage} onValueChange={changeAppLanguage}>
+              <SelectTrigger className="w-40 bg-white/10 border-white/20 text-white backdrop-blur">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-white/10 border-white/20 backdrop-blur">
+                {APP_LANGUAGES.map((lang) => (
+                  <SelectItem
+                    key={lang.code}
+                    value={lang.code}
+                    className="text-white hover:bg-white/20"
+                  >
+                    {lang.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          {/* Language Selector */}
+          {/* Speech Recognition Language Selector */}
           <div className="flex flex-col items-center gap-2">
             <label className="text-sm font-medium">
-              Speech Recognition Language
+              {t("speechRecognitionLanguage")}
             </label>
             <Select
               value={selectedLanguage}
@@ -627,9 +665,7 @@ export default function SpeechToTextApp() {
         {isMockMode && (
           <div className="mb-4 flex justify-center">
             <div className="bg-green-600 px-4 py-2 rounded-lg">
-              <span className="text-sm font-medium">
-                🎭 Mock Mode Active - Simulating speech recognition for testing
-              </span>
+              <span className="text-sm font-medium">{t("mockModeActive")}</span>
             </div>
           </div>
         )}
@@ -641,7 +677,8 @@ export default function SpeechToTextApp() {
               <span className="text-sm">
                 {isProcessing ? (
                   <>
-                    Processing<span className="animate-pulse">...</span>
+                    {t("processing")}
+                    <span className="animate-pulse">...</span>
                     {lastTranscript && (
                       <span className="ml-2 text-gray-300">
                         ("{lastTranscript.slice(0, 20)}
@@ -651,7 +688,7 @@ export default function SpeechToTextApp() {
                   </>
                 ) : (
                   <>
-                    Confidence: {((confidenceScore || 0) * 100).toFixed(1)}%
+                    {t("confidence")}: {((confidenceScore || 0) * 100).toFixed(1)}%
                     {lastTranscript && (
                       <span className="ml-2 text-gray-300">
                         ("{lastTranscript.slice(0, 20)}
@@ -669,7 +706,7 @@ export default function SpeechToTextApp() {
           {/* Left Textarea */}
           <div className="flex flex-col">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium">Left Panel</label>
+              <label className="text-sm font-medium">{t("leftPanel")}</label>
               <div className="flex gap-2">
                 <div className="flex">
                   <Button
@@ -694,7 +731,7 @@ export default function SpeechToTextApp() {
                 </div>
                 <Button onClick={clearLeftText} size="sm" variant="outline">
                   <X className="h-4 w-4 mr-1" />
-                  Clear
+                  {t("clear")}
                 </Button>
                 <Button
                   onClick={summarizeLeftText}
@@ -702,7 +739,7 @@ export default function SpeechToTextApp() {
                   variant="outline"
                   disabled={!leftText.trim() || isSummarizing}
                 >
-                  Summarize
+                  {t("summarize")}
                 </Button>
               </div>
             </div>
@@ -711,16 +748,14 @@ export default function SpeechToTextApp() {
               value={leftText}
               onChange={(e) => setLeftText(e.target.value)}
               className="flex-1 p-4 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500 backdrop-blur"
-              placeholder="Text will appear here..."
+              placeholder={t("placeholder.left")}
             />
           </div>
 
           {/* Right Textarea with Mic Button */}
           <div className="flex flex-col">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium">
-                Right Panel (Speech-to-Text)
-              </label>
+              <label className="text-sm font-medium">{t("rightPanel")}</label>
               <div className="flex gap-2">
                 <div className="flex">
                   <Button
@@ -745,7 +780,7 @@ export default function SpeechToTextApp() {
                 </div>
                 <Button onClick={clearRightText} size="sm" variant="outline">
                   <X className="h-4 w-4 mr-1" />
-                  Clear
+                  {t("clear")}
                 </Button>
               </div>
             </div>
@@ -759,7 +794,7 @@ export default function SpeechToTextApp() {
                 }
                 onChange={(e) => setRightText(e.target.value)}
                 className="flex-1 p-4 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500 backdrop-blur mb-4"
-                placeholder="Speech will be transcribed here..."
+                placeholder={t("placeholder.right")}
               />
               <Button
                 onClick={toggleRecording}
@@ -774,12 +809,12 @@ export default function SpeechToTextApp() {
                 {isRecording ? (
                   <>
                     <MicOff className="mr-2 h-6 w-6" />
-                    Stop Recording
+                    {t("recording.stop")}
                   </>
                 ) : (
                   <>
                     <Mic className="mr-2 h-6 w-6" />
-                    Start Recording
+                    {t("recording.start")}
                   </>
                 )}
               </Button>
@@ -789,47 +824,44 @@ export default function SpeechToTextApp() {
 
         {/* Command Palette Info */}
         <div className="mt-8 p-4 bg-white/5 backdrop-blur border border-white/20 rounded-lg">
-          <h2 className="text-lg font-semibold mb-3">Command Palette</h2>
+          <h2 className="text-lg font-semibold mb-3">{t("commandPalette.title")}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
             <div>
               <kbd className="bg-white/10 px-2 py-1 rounded">Alt + Q</kbd> :
-              Overwrite left with right content
+              {t("commandPalette.overwrite")}
             </div>
             <div>
               <kbd className="bg-white/10 px-2 py-1 rounded">Alt + W</kbd> :
-              Append right content to left content
+              {t("commandPalette.append")}
             </div>
             <div>
               <kbd className="bg-white/10 px-2 py-1 rounded">Alt + E</kbd> :
-              Copy left content to clipboard
+              {t("commandPalette.copy")}
             </div>
             <div>
               <kbd className="bg-white/10 px-2 py-1 rounded">
                 Ctrl + Shift + L
               </kbd>{" "}
-              : Clear left panel
+              : {t("commandPalette.clearLeft")}
             </div>
             <div>
               <kbd className="bg-white/10 px-2 py-1 rounded">
                 Ctrl + Shift + R
               </kbd>{" "}
-              : Clear right panel
+              : {t("commandPalette.clearRight")}
             </div>
             <div>
               <kbd className="bg-white/10 px-2 py-1 rounded">
                 Ctrl + Shift + Tab
               </kbd>{" "}
-              : Switch between panels
+              : {t("commandPalette.switchPanels")}
             </div>
           </div>
         </div>
 
         {!isSupported && !isMockMode && (
           <div className="mt-4 p-4 bg-red-500/80 backdrop-blur rounded-lg">
-            <p className="text-white">
-              Speech recognition is not supported in this browser. Please use
-              Chrome, Edge, or Safari, or enable Mock Mode for testing.
-            </p>
+            <p className="text-white">{t("unsupported")}</p>
           </div>
         )}
       </div>

@@ -5,11 +5,11 @@ import { SummarizeTextUseCase } from '@/application/transcription/SummarizeTextU
 
 export async function handleSummarizeRequest(req: NextRequest) {
   try {
-    const { text } = await req.json()
+    const { text, language } = await req.json()
     const useCase = new SummarizeTextUseCase(new OpenAISummarizationService())
-    const result = await useCase.execute({ text })
+    const result = await useCase.execute({ text, language })
     return jsonOk({ summary: result.summary })
   } catch (error) {
     return handleHttpError(error)
   }
-} 
+}
