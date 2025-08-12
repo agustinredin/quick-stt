@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { jsonOk, handleHttpError, jsonError } from "@/shared/http";
 import { TranscribeAudioUseCase } from "@/application/transcription/TranscribeAudioUseCase";
-import { OpenAITranscriptionService } from "@/infrastructure/openai/OpenAITranscriptionService";
+import { DeepSeekTranscriptionService } from "@/infrastructure/deepseek/DeepSeekTranscriptionService";
 
 export async function handleTranscribeRequest(req: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function handleTranscribeRequest(req: NextRequest) {
     }
 
     const useCase = new TranscribeAudioUseCase(
-      new OpenAITranscriptionService(),
+      new DeepSeekTranscriptionService(),
     );
     const result = await useCase.execute({ file });
     return jsonOk({ text: result.text });

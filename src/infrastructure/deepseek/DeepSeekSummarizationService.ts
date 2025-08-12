@@ -1,16 +1,16 @@
 import { SummarizationService } from '@/domain/transcription/SummarizationService'
 import { SummarizationResult } from '@/domain/transcription/types'
-import { createOpenAIClient } from '@/infrastructure/openai/client'
+import { createDeepSeekClient } from '@/infrastructure/deepseek/client'
 import i18n from '@/lib/i18n'
 
-export class OpenAISummarizationService implements SummarizationService {
+export class DeepSeekSummarizationService implements SummarizationService {
   async summarize(text: string, language: string): Promise<SummarizationResult> {
-    const openai = createOpenAIClient()
+    const client = createDeepSeekClient()
     const t = i18n.getFixedT(language)
     const prompt = t('openai.prompt', { text })
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+    const completion = await client.chat.completions.create({
+      model: "deepseek-chat",
       messages: [{ role: "user", content: prompt }],
     });
 

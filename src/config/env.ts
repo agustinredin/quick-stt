@@ -1,9 +1,9 @@
 export const env = {
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY || "",
+  DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || "",
 };
 
 export function assertEnv() {
-  if (!env.OPENAI_API_KEY) {
-    throw new Error("Missing OPENAI_API_KEY in environment");
+  if (!env.DEEPSEEK_API_KEY) {
+    throw new Error("Missing DEEPSEEK_API_KEY in environment");
   }
 }
