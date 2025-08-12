@@ -94,8 +94,7 @@ declare global {
 export default function SpeechToTextApp() {
   const { t, i18n } = useTranslation();
   const [appLanguage, setAppLanguage] = useState(i18n.language);
-  const [leftText, setLeftText] = useState("");
-  const [rightText, setRightText] = useState("");
+  const [transcript, setTranscript] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("en-US");
@@ -104,7 +103,6 @@ export default function SpeechToTextApp() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isMockMode, setIsMockMode] = useState(false);
   const [mockSpeed, setMockSpeed] = useState(1000); // milliseconds between mock phrases
-  const [isSummarizing, setIsSummarizing] = useState(false);
 
   const changeAppLanguage = (lang: string) => {
     setAppLanguage(lang);
@@ -112,10 +110,8 @@ export default function SpeechToTextApp() {
   };
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const mockIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const leftTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const rightTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isRecordingRef = useRef(isRecording);
   const mockTranscriptIndexRef = useRef(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -143,7 +139,7 @@ export default function SpeechToTextApp() {
       setTimeout(() => {
         debugger;
         if (isRecordingRef.current) {
-          setRightText((prev) => {
+          setTranscript((prev) => {
             const newText = prev + (prev ? " " : "") + transcript;
             return newText;
           });
@@ -176,7 +172,7 @@ export default function SpeechToTextApp() {
       });
       const data = await res.json();
       if (data.text) {
-        setRightText((prev) => prev + (prev ? " " : "") + data.text.trim());
+        setTranscript((prev) => prev + (prev ? " " : "") + data.text.trim());
       }
     } catch (err) {
       console.error("OpenAI transcription error:", err);
@@ -213,48 +209,6 @@ export default function SpeechToTextApp() {
   };
 
   // Switch between textareas with cursor at end
-  const switchTextarea = useCallback(() => {
-    const leftFocused = document.activeElement === leftTextareaRef.current;
-    const rightFocused = document.activeElement === rightTextareaRef.current;
-
-    if (leftFocused) {
-      // Switch to right textarea
-      if (rightTextareaRef.current) {
-        rightTextareaRef.current.focus();
-        rightTextareaRef.current.setSelectionRange(
-          rightText.length,
-          rightText.length,
-        );
-        toast.success(t("toast.switchedRight"), {
-          description: t("toast.usedShortcut", { shortcut: "Ctrl+Shift+Tab" }),
-        });
-      }
-    } else if (rightFocused) {
-      // Switch to left textarea
-      if (leftTextareaRef.current) {
-        leftTextareaRef.current.focus();
-        leftTextareaRef.current.setSelectionRange(
-          leftText.length,
-          leftText.length,
-        );
-        toast.success(t("toast.switchedLeft"), {
-          description: t("toast.usedShortcut", { shortcut: "Ctrl+Shift+Tab" }),
-        });
-      }
-    } else {
-      // If no textarea is focused, focus on left by default
-      if (leftTextareaRef.current) {
-        leftTextareaRef.current.focus();
-        leftTextareaRef.current.setSelectionRange(
-          leftText.length,
-          leftText.length,
-        );
-        toast.success(t("toast.focusedLeft"), {
-          description: t("toast.usedShortcut", { shortcut: "Ctrl+Shift+Tab" }),
-        });
-      }
-    }
-  }, [leftText, rightText, t]);
 
   useEffect(() => {
     isRecordingRef.current = isRecording;
@@ -304,7 +258,7 @@ export default function SpeechToTextApp() {
 
           // Add final results to the text
           if (finalTranscript) {
-            setRightText((prev) => {
+            setTranscript((prev) => {
               const newText = prev + (prev ? " " : "") + finalTranscript;
               return newText;
             });
@@ -318,10 +272,9 @@ export default function SpeechToTextApp() {
           console.error("Speech recognition error:", event.error);
           setIsRecording(false);
           setIsProcessing(false);
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-          }
-          toast.error(t("toast.speechRecognitionError", { error: event.error }));
+          toast.error(
+            t("toast.speechRecognitionError", { error: event.error }),
+          );
         };
 
         recognitionRef.current.onend = () => {
@@ -338,77 +291,13 @@ export default function SpeechToTextApp() {
       }
     }
 
-    // Keyboard shortcuts
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.altKey) {
-        switch (e.key.toLowerCase()) {
-          case "q":
-            e.preventDefault();
-            setLeftText(rightText);
-            toast.success(t("toast.leftOverwritten"), {
-              description: t("toast.usedShortcut", { shortcut: "Alt+Q" }),
-            });
-            break;
-          case "w":
-            e.preventDefault();
-            setLeftText((prev) => prev + (prev ? " " : "") + rightText);
-            toast.success(t("toast.rightAppended"), {
-              description: t("toast.usedShortcut", { shortcut: "Alt+W" }),
-            });
-            break;
-          case "e":
-            e.preventDefault();
-            if (navigator.clipboard) {
-              navigator.clipboard.writeText(leftText);
-              toast.success(t("toast.leftCopied"), {
-                description: t("toast.usedShortcut", { shortcut: "Alt+E" }),
-              });
-            } else {
-              toast.error(t("toast.clipboardUnsupported"));
-            }
-            break;
-        }
-      }
-
-      // New keyboard shortcuts for clearing and switching
-      if (e.ctrlKey && e.shiftKey) {
-        switch (e.key.toLowerCase()) {
-          case "l":
-            e.preventDefault();
-            clearLeftText();
-            toast.success(t("toast.leftCleared"), {
-              description: t("toast.usedShortcut", { shortcut: "Ctrl+Shift+L" }),
-            });
-            break;
-          case "r":
-            e.preventDefault();
-            clearRightText();
-            toast.success(t("toast.rightCleared"), {
-              description: t("toast.usedShortcut", { shortcut: "Ctrl+Shift+R" }),
-            });
-            break;
-          case "tab":
-            e.preventDefault();
-            switchTextarea();
-            break;
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      const currentInterval = intervalRef.current;
-      if (currentInterval) {
-        clearInterval(currentInterval);
-      }
       const currentMockInterval = mockIntervalRef.current;
       if (currentMockInterval) {
         clearInterval(currentMockInterval);
       }
     };
-  }, [leftText, rightText, isRecording, selectedLanguage, switchTextarea, t]);
+  }, [isRecording, selectedLanguage, t]);
 
   // Update language when selection changes
   useEffect(() => {
@@ -453,9 +342,6 @@ export default function SpeechToTextApp() {
         isRecordingRef.current = false;
         setIsProcessing(false);
         recognitionRef.current?.stop();
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-        }
         toast.info(t("recording.stopped"));
       } else {
         setIsRecording(true);
@@ -488,14 +374,9 @@ export default function SpeechToTextApp() {
     );
   };
 
-  const clearLeftText = () => {
-    setLeftText("");
-    toast.success(t("toast.leftCleared"));
-  };
-
-  const clearRightText = () => {
-    setRightText("");
-    toast.success(t("toast.rightCleared"));
+  const clearTranscript = () => {
+    setTranscript("");
+    toast.success(t("toast.transcriptCleared"));
     setConfidenceScore(null);
     setLastTranscript("");
     setIsProcessing(false);
@@ -530,29 +411,6 @@ export default function SpeechToTextApp() {
     } catch (error) {
       toast.error(t("toast.exportDocxError"));
       console.error("DOCX export error:", error);
-    }
-  };
-
-  const summarizeLeftText = async () => {
-    if (!leftText.trim()) return;
-    try {
-      setIsSummarizing(true);
-      const res = await fetch("/api/openai-summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: leftText, language: appLanguage }),
-      });
-      const data = await res.json();
-      console.log("Summarize result:", data.summary);
-      if (data.summary) {
-        setLeftText(data.summary);
-        toast.success(t("toast.textSummarized"));
-      }
-    } catch (err) {
-      console.error("Summarize error:", err);
-      toast.error(t("toast.summarizeError"));
-    } finally {
-      setIsSummarizing(false);
     }
   };
 
@@ -688,7 +546,8 @@ export default function SpeechToTextApp() {
                   </>
                 ) : (
                   <>
-                    {t("confidence")}: {((confidenceScore || 0) * 100).toFixed(1)}%
+                    {t("confidence")}:{" "}
+                    {((confidenceScore || 0) * 100).toFixed(1)}%
                     {lastTranscript && (
                       <span className="ml-2 text-gray-300">
                         ("{lastTranscript.slice(0, 20)}
@@ -702,160 +561,71 @@ export default function SpeechToTextApp() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[70vh]">
-          {/* Left Textarea */}
-          <div className="flex flex-col">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium">{t("leftPanel")}</label>
-              <div className="flex gap-2">
-                <div className="flex">
-                  <Button
-                    onClick={() => exportAsText(leftText)}
-                    size="sm"
-                    variant="outline"
-                    className="rounded-r-none"
-                    disabled={!leftText.trim()}
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    TXT
-                  </Button>
-                  <Button
-                    onClick={() => exportAsDocx(leftText)}
-                    size="sm"
-                    variant="outline"
-                    className="rounded-l-none border-l-0"
-                    disabled={!leftText.trim()}
-                  >
-                    DOCX
-                  </Button>
-                </div>
-                <Button onClick={clearLeftText} size="sm" variant="outline">
-                  <X className="h-4 w-4 mr-1" />
-                  {t("clear")}
-                </Button>
+        <div className="flex flex-col gap-6 h-[70vh]">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-medium">{t("transcript")}</label>
+            <div className="flex gap-2">
+              <div className="flex">
                 <Button
-                  onClick={summarizeLeftText}
+                  onClick={() => exportAsText(transcript)}
                   size="sm"
                   variant="outline"
-                  disabled={!leftText.trim() || isSummarizing}
+                  className="rounded-r-none"
+                  disabled={!transcript.trim()}
                 >
-                  {t("summarize")}
+                  <Download className="h-4 w-4 mr-1" />
+                  TXT
+                </Button>
+                <Button
+                  onClick={() => exportAsDocx(transcript)}
+                  size="sm"
+                  variant="outline"
+                  className="rounded-l-none border-l-0"
+                  disabled={!transcript.trim()}
+                >
+                  DOCX
                 </Button>
               </div>
-            </div>
-            <textarea
-              ref={leftTextareaRef}
-              value={leftText}
-              onChange={(e) => setLeftText(e.target.value)}
-              className="flex-1 p-4 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500 backdrop-blur"
-              placeholder={t("placeholder.left")}
-            />
-          </div>
-
-          {/* Right Textarea with Mic Button */}
-          <div className="flex flex-col">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium">{t("rightPanel")}</label>
-              <div className="flex gap-2">
-                <div className="flex">
-                  <Button
-                    onClick={() => exportAsText(rightText)}
-                    size="sm"
-                    variant="outline"
-                    className="rounded-r-none"
-                    disabled={!rightText.trim()}
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    TXT
-                  </Button>
-                  <Button
-                    onClick={() => exportAsDocx(rightText)}
-                    size="sm"
-                    variant="outline"
-                    className="rounded-l-none border-l-0"
-                    disabled={!rightText.trim()}
-                  >
-                    DOCX
-                  </Button>
-                </div>
-                <Button onClick={clearRightText} size="sm" variant="outline">
-                  <X className="h-4 w-4 mr-1" />
-                  {t("clear")}
-                </Button>
-              </div>
-            </div>
-            <div className="flex-1 flex flex-col">
-              <textarea
-                ref={rightTextareaRef}
-                value={
-                  isProcessing && lastTranscript
-                    ? rightText + (rightText ? " " : "") + lastTranscript
-                    : rightText
-                }
-                onChange={(e) => setRightText(e.target.value)}
-                className="flex-1 p-4 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500 backdrop-blur mb-4"
-                placeholder={t("placeholder.right")}
-              />
-              <Button
-                onClick={toggleRecording}
-                size="lg"
-                className={`w-full h-16 text-lg font-semibold ${
-                  isRecording
-                    ? "bg-red-600 hover:bg-red-700 text-white"
-                    : "bg-gradient-to-r from-cyan-500 via-purple-600 to-green-500 text-white hover:opacity-90"
-                }`}
-                disabled={!isSupported && !isMockMode}
-              >
-                {isRecording ? (
-                  <>
-                    <MicOff className="mr-2 h-6 w-6" />
-                    {t("recording.stop")}
-                  </>
-                ) : (
-                  <>
-                    <Mic className="mr-2 h-6 w-6" />
-                    {t("recording.start")}
-                  </>
-                )}
+              <Button onClick={clearTranscript} size="sm" variant="outline">
+                <X className="h-4 w-4 mr-1" />
+                {t("clear")}
               </Button>
             </div>
           </div>
-        </div>
-
-        {/* Command Palette Info */}
-        <div className="mt-8 p-4 bg-white/5 backdrop-blur border border-white/20 rounded-lg">
-          <h2 className="text-lg font-semibold mb-3">{t("commandPalette.title")}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-            <div>
-              <kbd className="bg-white/10 px-2 py-1 rounded">Alt + Q</kbd> :
-              {t("commandPalette.overwrite")}
-            </div>
-            <div>
-              <kbd className="bg-white/10 px-2 py-1 rounded">Alt + W</kbd> :
-              {t("commandPalette.append")}
-            </div>
-            <div>
-              <kbd className="bg-white/10 px-2 py-1 rounded">Alt + E</kbd> :
-              {t("commandPalette.copy")}
-            </div>
-            <div>
-              <kbd className="bg-white/10 px-2 py-1 rounded">
-                Ctrl + Shift + L
-              </kbd>{" "}
-              : {t("commandPalette.clearLeft")}
-            </div>
-            <div>
-              <kbd className="bg-white/10 px-2 py-1 rounded">
-                Ctrl + Shift + R
-              </kbd>{" "}
-              : {t("commandPalette.clearRight")}
-            </div>
-            <div>
-              <kbd className="bg-white/10 px-2 py-1 rounded">
-                Ctrl + Shift + Tab
-              </kbd>{" "}
-              : {t("commandPalette.switchPanels")}
-            </div>
+          <div className="flex-1 flex flex-col">
+            <textarea
+              ref={textareaRef}
+              value={
+                isProcessing && lastTranscript
+                  ? transcript + (transcript ? " " : "") + lastTranscript
+                  : transcript
+              }
+              onChange={(e) => setTranscript(e.target.value)}
+              className="flex-1 p-4 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500 backdrop-blur mb-4"
+              placeholder={t("placeholder.transcript")}
+            />
+            <Button
+              onClick={toggleRecording}
+              size="lg"
+              className={`w-full h-16 text-lg font-semibold ${
+                isRecording
+                  ? "bg-red-600 hover:bg-red-700 text-white"
+                  : "bg-gradient-to-r from-cyan-500 via-purple-600 to-green-500 text-white hover:opacity-90"
+              }`}
+              disabled={!isSupported && !isMockMode}
+            >
+              {isRecording ? (
+                <>
+                  <MicOff className="mr-2 h-6 w-6" />
+                  {t("recording.stop")}
+                </>
+              ) : (
+                <>
+                  <Mic className="mr-2 h-6 w-6" />
+                  {t("recording.start")}
+                </>
+              )}
+            </Button>
           </div>
         </div>
 
