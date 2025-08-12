@@ -1,9 +1,9 @@
-import { TranscriptionService } from '@/domain/transcription/TranscriptionService'
-import { TranscriptionResult } from '@/domain/transcription/types'
-import { ValidationError } from '@/shared/errors'
+import { TranscriptionService } from "@/domain/transcription/TranscriptionService";
+import { TranscriptionResult } from "@/domain/transcription/types";
+import { ValidationError } from "@/shared/errors";
 
 export interface TranscribeAudioInput {
-  file: File | null
+  file: File | null;
 }
 
 export class TranscribeAudioUseCase {
@@ -11,8 +11,8 @@ export class TranscribeAudioUseCase {
 
   async execute(input: TranscribeAudioInput): Promise<TranscriptionResult> {
     if (!input.file) {
-      throw new ValidationError('Missing file')
+      throw new ValidationError("Missing file");
     }
-    return this.transcriptionService.transcribe(input.file)
+    return this.transcriptionService.transcribe(input.file);
   }
-} 
+}

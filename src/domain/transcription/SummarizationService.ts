@@ -1,5 +1,5 @@
-import { SummarizationResult } from '@/domain/transcription/types'
+import { SummarizationResult } from "@/domain/transcription/types";
 
 export interface SummarizationService {
-  summarize(text: string): Promise<SummarizationResult>
-} 
+  summarize(text: string): Promise<SummarizationResult>;
+}

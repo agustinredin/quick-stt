@@ -61,14 +61,14 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border tracking-tight;
   }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-geist-sans), sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-orbitron), sans-serif;
+    font-family: var(--font-geist-mono), sans-serif;
   }
   code, pre {
     font-family: var(--font-geist-mono), monospace;

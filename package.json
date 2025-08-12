@@ -11,6 +11,7 @@
     "openai-stream": "node src/openai_stream.mjs"
   },
   "dependencies": {
+    "@openai/codex": "^0.20.0",
     "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",

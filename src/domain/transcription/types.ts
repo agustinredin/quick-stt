@@ -1,7 +1,7 @@
 export interface TranscriptionResult {
-  text: string
+  text: string;
 }
 
 export interface SummarizationResult {
-  summary: string
-} 
+  summary: string;
+}
