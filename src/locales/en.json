@@ -14,13 +14,10 @@
   "mockModeActive": "🎭 Mock Mode Active - Simulating speech recognition for testing",
   "processing": "Processing",
   "confidence": "Confidence",
-  "leftPanel": "Left Panel",
-  "rightPanel": "Right Panel (Speech-to-Text)",
+  "transcript": "Transcript",
   "clear": "Clear",
-  "summarize": "Summarize",
   "placeholder": {
-    "left": "Text will appear here...",
-    "right": "Speech will be transcribed here..."
+    "transcript": "Speech will be transcribed here..."
   },
   "recording": {
     "start": "Start Recording",
@@ -40,23 +37,12 @@
     "leftCopied": "Left content copied to clipboard",
     "clipboardUnsupported": "Clipboard not supported in this browser",
     "leftCleared": "Left panel cleared",
-    "rightCleared": "Right panel cleared",
+    "transcriptCleared": "Transcript cleared",
     "speechRecognitionError": "Speech recognition error: {{error}}",
     "microphoneError": "Failed to access microphone",
     "openaiError": "OpenAI transcription error",
     "exported": "Exported as {{filename}}.{{ext}}",
-    "exportDocxError": "Failed to export as DOCX",
-    "textSummarized": "Text summarized",
-    "summarizeError": "Failed to summarize text"
-  },
-  "commandPalette": {
-    "title": "Command Palette",
-    "overwrite": "Overwrite left with right content",
-    "append": "Append right content to left content",
-    "copy": "Copy left content to clipboard",
-    "clearLeft": "Clear left panel",
-    "clearRight": "Clear right panel",
-    "switchPanels": "Switch between panels"
+    "exportDocxError": "Failed to export as DOCX"
   },
   "unsupported": "Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari, or enable Mock Mode for testing.",
   "openai": {

@@ -14,13 +14,10 @@
   "mockModeActive": "🎭 Modo Simulado Activo - Simulando reconocimiento de voz para pruebas",
   "processing": "Procesando",
   "confidence": "Confianza",
-  "leftPanel": "Panel Izquierdo",
-  "rightPanel": "Panel Derecho (Voz a Texto)",
+  "transcript": "Transcripción",
   "clear": "Limpiar",
-  "summarize": "Resumir",
   "placeholder": {
-    "left": "El texto aparecerá aquí...",
-    "right": "La voz se transcribirá aquí..."
+    "transcript": "La voz se transcribirá aquí..."
   },
   "recording": {
     "start": "Iniciar grabación",
@@ -40,23 +37,12 @@
     "leftCopied": "Contenido izquierdo copiado al portapapeles",
     "clipboardUnsupported": "El portapapeles no está soportado en este navegador",
     "leftCleared": "Panel izquierdo limpiado",
-    "rightCleared": "Panel derecho limpiado",
+    "transcriptCleared": "Transcripción limpiada",
     "speechRecognitionError": "Error de reconocimiento de voz: {{error}}",
     "microphoneError": "No se pudo acceder al micrófono",
     "openaiError": "Error de transcripción de OpenAI",
     "exported": "Exportado como {{filename}}.{{ext}}",
-    "exportDocxError": "No se pudo exportar como DOCX",
-    "textSummarized": "Texto resumido",
-    "summarizeError": "No se pudo resumir el texto"
-  },
-  "commandPalette": {
-    "title": "Atajos",
-    "overwrite": "Reemplazar izquierda con derecha",
-    "append": "Añadir contenido derecho al izquierdo",
-    "copy": "Copiar contenido izquierdo al portapapeles",
-    "clearLeft": "Limpiar panel izquierdo",
-    "clearRight": "Limpiar panel derecho",
-    "switchPanels": "Cambiar entre paneles"
+    "exportDocxError": "No se pudo exportar como DOCX"
   },
   "unsupported": "El reconocimiento de voz no está soportado en este navegador. Usa Chrome, Edge o Safari, o habilita el Modo Simulado para pruebas.",
   "openai": {
