@@ -10,7 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mic, MicOff, X, Download, Play, Pause } from "lucide-react";
+import { Mic, X, Download, Play, Pause } from "lucide-react";
+import { VoiceWaves } from "@/components/voice-waves";
 import { toast } from "sonner";
 import { saveAs } from "file-saver";
 import { Document, Packer, Paragraph, TextRun } from "docx";
@@ -115,6 +116,7 @@ export default function SpeechToTextApp() {
   const isRecordingRef = useRef(isRecording);
   const mockTranscriptIndexRef = useRef(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   // Mock speech recognition function
   const startMockRecording = useCallback(() => {
@@ -182,14 +184,17 @@ export default function SpeechToTextApp() {
     }
   };
 
-  const startOpenAIRecording = async () => {
+  const startAudioCapture = async (sendChunks: boolean) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
       mediaRecorderRef.current = recorder;
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
-          sendOpenAIChunk(e.data);
+          audioChunksRef.current.push(e.data);
+          if (sendChunks) {
+            sendOpenAIChunk(e.data);
+          }
         }
       };
       recorder.start(2000);
@@ -199,12 +204,21 @@ export default function SpeechToTextApp() {
     }
   };
 
-  const stopOpenAIRecording = () => {
+  const stopAudioCapture = () => {
     const recorder = mediaRecorderRef.current;
     if (recorder) {
       recorder.stream.getTracks().forEach((t) => t.stop());
       recorder.stop();
       mediaRecorderRef.current = null;
+      const audioBlob = new Blob(audioChunksRef.current, {
+        type: "audio/webm",
+      });
+      audioChunksRef.current = [];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        console.log("Recorded audio base64:", reader.result);
+      };
+      reader.readAsDataURL(audioBlob);
     }
   };
 
@@ -307,7 +321,6 @@ export default function SpeechToTextApp() {
   }, [selectedLanguage]);
 
   const toggleRecording = () => {
-    // debugger
     if (isMockMode) {
       // Mock mode recording
       if (isRecording) {
@@ -326,11 +339,11 @@ export default function SpeechToTextApp() {
       if (!isSupported) {
         if (isRecording) {
           setIsRecording(false);
-          stopOpenAIRecording();
+          stopAudioCapture();
           toast.info(t("recording.stopped"));
         } else {
           setIsRecording(true);
-          startOpenAIRecording();
+          startAudioCapture(true);
           toast.success(t("recording.started"));
         }
         return;
@@ -342,11 +355,13 @@ export default function SpeechToTextApp() {
         isRecordingRef.current = false;
         setIsProcessing(false);
         recognitionRef.current?.stop();
+        stopAudioCapture();
         toast.info(t("recording.stopped"));
       } else {
         setIsRecording(true);
         isRecordingRef.current = true;
         recognitionRef.current?.start();
+        startAudioCapture(false);
         toast.success(t("recording.started"));
       }
     }
@@ -360,6 +375,7 @@ export default function SpeechToTextApp() {
       } else {
         recognitionRef.current?.stop();
       }
+      stopAudioCapture();
       setIsRecording(false);
       isRecordingRef.current = false;
       setIsProcessing(false);
@@ -415,7 +431,24 @@ export default function SpeechToTextApp() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black text-gray-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black text-gray-100 p-6 relative">
+      <div className="absolute top-4 right-4">
+        <div className="relative">
+          {isRecording && <VoiceWaves />}
+          <Button
+            onClick={toggleRecording}
+            size="icon"
+            className={`rounded-full w-16 h-16 p-0 text-white ${
+              isRecording
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-gradient-to-r from-cyan-500 via-purple-600 to-green-500 hover:opacity-90"
+            }`}
+            disabled={!isSupported && !isMockMode}
+          >
+            <Mic className="h-8 w-8" />
+          </Button>
+        </div>
+      </div>
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold text-center mb-8 bg-gradient-to-r from-cyan-400 via-purple-500 to-green-400 bg-clip-text text-transparent">
           {t("title")}
@@ -601,31 +634,9 @@ export default function SpeechToTextApp() {
                   : transcript
               }
               onChange={(e) => setTranscript(e.target.value)}
-              className="flex-1 p-4 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500 backdrop-blur mb-4"
+              className="flex-1 p-4 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500 backdrop-blur"
               placeholder={t("placeholder.transcript")}
             />
-            <Button
-              onClick={toggleRecording}
-              size="lg"
-              className={`w-full h-16 text-lg font-semibold ${
-                isRecording
-                  ? "bg-red-600 hover:bg-red-700 text-white"
-                  : "bg-gradient-to-r from-cyan-500 via-purple-600 to-green-500 text-white hover:opacity-90"
-              }`}
-              disabled={!isSupported && !isMockMode}
-            >
-              {isRecording ? (
-                <>
-                  <MicOff className="mr-2 h-6 w-6" />
-                  {t("recording.stop")}
-                </>
-              ) : (
-                <>
-                  <Mic className="mr-2 h-6 w-6" />
-                  {t("recording.start")}
-                </>
-              )}
-            </Button>
           </div>
         </div>
 
